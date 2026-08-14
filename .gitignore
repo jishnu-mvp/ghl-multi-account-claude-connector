@@ -1,0 +1,36 @@
+# Secrets — never commit
+.env
+*.key
+*.pem
+
+# Personal/local Claude Code settings — not shared
+.claude/settings.local.json
+# NOTE: .mcp.json IS committed on purpose — it must only ever contain the
+# ${GHL_PIT_TOKEN} / ${GHL_LOCATION_ID} placeholders, never a real pit- token.
+# Real tokens live in .env.
+
+# Local GHL exports / backups produced by the helper scripts
+contact-*.json
+contacts-*.json
+opportunity-*.json
+opportunities-*.json
+conversation-*.json
+appointment-*.json
+backup*.json
+export-*.json
+
+# CRM data does not belong in this tooling repo (it contains PII)
+*.csv
+*.pdf
+*.xlsx
+run-*.json
+test-*.json
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+*.swp
+
+# Local scratch/build tooling (e.g. node_modules from generating docs) — not part of the repo
+scratch/
+node_modules/
