@@ -1,11 +1,19 @@
 # GHL Claude Connector — GoHighLevel + Claude Code
 
-**In one sentence:** fill in one token in one file, and then you can just *talk to your
-GoHighLevel CRM in plain English* — "find every contact tagged `hot-lead` who hasn't been
-messaged in 30 days" — and Claude will do it for you.
+**In one sentence:** log in to GoHighLevel once in your browser, and then you can just *talk to
+your CRM in plain English* — "find every contact tagged `hot-lead` who hasn't been messaged in
+30 days" — and Claude will do it for you.
 
 You do **not** need to be a developer to use this. You do **not** need to know what an API is.
-If you can copy and paste, you can set this up.
+There is nothing to install and no file to edit.
+
+> **The fastest way in:** open this folder in Claude Code and say **"log in to my GoHighLevel
+> account"**. Claude gives you a link, you log in in your browser, and you are working. That is
+> the whole setup. [Jump to it →](#4-setup--two-ways-pick-one)
+>
+> **Nobody on your team wants to install anything?** There's a hosted version too: deploy it
+> once, and everyone just adds a URL inside Claude — web, desktop or phone — and signs in with
+> their own HighLevel account. [Jump to that →](#17-the-hosted-connector-no-claude-code-needed)
 
 ---
 
@@ -14,11 +22,11 @@ If you can copy and paste, you can set this up.
 1. [What is this, really?](#1-what-is-this-really)
 2. [Words you'll see, in plain English](#2-words-youll-see-in-plain-english)
 3. [Before you start (one-time, per computer)](#3-before-you-start-one-time-per-computer)
-4. [Setup — the 3 steps](#4-setup--the-3-steps)
+4. [Setup — two ways, pick one](#4-setup--two-ways-pick-one)
 5. [Check it worked](#5-check-it-worked)
 6. [Using it: things you can just ask for](#6-using-it-things-you-can-just-ask-for)
 7. [Command examples (the cookbook)](#7-command-examples-the-cookbook)
-8. [The two roads to GoHighLevel (API vs MCP)](#8-the-two-roads-to-gohighlevel-api-vs-mcp)
+8. [The roads to GoHighLevel](#8-the-roads-to-gohighlevel)
 9. [Everything Claude can touch](#9-everything-claude-can-touch)
 10. [What it deliberately cannot do](#10-what-it-deliberately-cannot-do)
 11. [Safety: this is your real CRM](#11-safety-this-is-your-real-crm)
@@ -27,6 +35,7 @@ If you can copy and paste, you can set this up.
 14. [Every file, and what it's for](#14-every-file-and-what-its-for)
 15. [FAQ](#15-faq)
 16. [Working with more than one sub-account](#16-working-with-more-than-one-sub-account)
+17. [The hosted connector (no Claude Code needed)](#17-the-hosted-connector-no-claude-code-needed)
 
 ---
 
@@ -40,9 +49,10 @@ This repo is the missing bridge. Open it in Claude Code and every session gains:
 | What you get | What it means for you |
 |---|---|
 | **Working rules** — [CLAUDE.md](CLAUDE.md) | Claude reads this automatically, every session. It's the rulebook: how to reach your CRM, and — importantly — what it must **never** do without asking you first. |
-| **A `/ghl` toolkit** — [SKILL.md](.claude/skills/ghl/SKILL.md) | Around 70 ready-made commands (contacts, messages, deals, appointments, invoices…) plus the full reference. Claude uses these instead of guessing. |
-| **One credential for everything** | A single **Private Integration Token** unlocks both ways of reaching GoHighLevel. No OAuth app, no old v1 API key, no second password. |
-| **Safe secret handling** | Your token lives in a file called `.env` that git is told to ignore. It never gets committed or shared. |
+| **A connector you log in to** — [mcp-server/](mcp-server/) | Around 100 ready-made tools, and **you connect by logging in to GoHighLevel in your browser** — no file to edit, nothing to install, and everyone who opens this folder logs in as themselves. |
+| **A `/ghl` toolkit** — [SKILL.md](.claude/skills/ghl/SKILL.md) | The same power from the command line: around 70 commands (contacts, messages, deals, appointments, invoices…) plus the full reference, for bulk and scheduled work. |
+| **Your own credential, either way** | Your **HighLevel login** or your **Private Integration Token** — never a shared key, no old v1 API key, no second password. |
+| **Safe secret handling** | Logins are saved outside this folder, readable only by you (`~/.ghl-mcp/`). Tokens for the command-line route live in `.env`, which git is told to ignore. Neither is ever committed, shared, or printed back to you. |
 | **A startup safety check** | Every time Claude starts, it checks your setup and *tells you inside the chat* if something's missing. You can't silently end up half-configured. |
 
 **The point:** you describe the outcome you want; Claude figures out which CRM operations to
@@ -97,7 +107,49 @@ cd path/to/ghl-claude-connector
 
 ---
 
-## 4. Setup — the 3 steps
+## 4. Setup — two ways, pick one
+
+### The easy way: just log in (recommended, nothing to edit)
+
+Open this folder in Claude Code and ask:
+
+```
+log in to my GoHighLevel account
+```
+
+Claude calls its `ghl_login` tool and gives you a link like
+`http://127.0.0.1:52413/?k=…`. Open it. That page runs **on your own computer** and nobody else
+can reach it. On it you either:
+
+- **paste your Private Integration Token** — HighLevel → *Settings → Other Settings → Private
+  Integrations → Create new Integration*, tick the scopes, copy the `pit-…` token; or
+- **click "Log in with HighLevel"** and sign in with your normal HighLevel email and password,
+  if your agency has set that up once (the page explains how).
+
+Give the connection a short name — the "alias" you'll use in chat, like `kellixiq` — and press
+Connect. The page checks the credential against HighLevel, reads your business name back, and
+saves it to `~/.ghl-mcp/credentials.json` on your machine, readable only by you. **It is never
+saved into this folder, and never typed into the chat.**
+
+Then just talk:
+
+```
+how many contacts tagged vip does Kellix iQ have?
+```
+
+That's it. No `.env`, no restarting Claude, and everyone who uses this folder logs in as
+themselves. To add another client, log in again with a different alias.
+
+> Prefer the terminal? `node mcp-server/server.js --login --account kellixiq` does the same
+> thing without a chat.
+>
+> **One limitation:** the login page only works where your browser and Claude Code are on the
+> same computer — the normal desktop/terminal setup. If you are using Claude Code **on the web**,
+> use the token route below instead.
+
+---
+
+### The token route: `.env` (needed for the helper scripts, cron jobs and web sessions)
 
 Total time: about two minutes. Do these in order.
 
@@ -521,39 +573,47 @@ re-reading the record is.
 
 ---
 
-## 8. The two roads to GoHighLevel (API vs MCP)
+## 8. The roads to GoHighLevel
 
-There are two ways in, and **both use the same token you already pasted** — nothing extra to set
-up. You don't have to choose; Claude follows the rules in [CLAUDE.md](CLAUDE.md) automatically.
-This section is just so nothing surprises you.
+There are a few ways in. You don't have to choose — Claude follows the rules in
+[CLAUDE.md](CLAUDE.md) automatically. This section is just so nothing surprises you.
 
-Think of it as a **workshop** versus a **helpdesk**:
+### Road 1 — The `ghl` server 🚪 *the front door* — **the default**
+This repo's own connector, in [mcp-server/](mcp-server/). Around 100 tools covering everything
+below, and it's the one you **log in** to. Nothing to configure, and the careful habits are
+built into it rather than remembered: it refuses to act on a client you didn't name, refuses to
+send a message or book an appointment until you've said yes to the exact wording, and backs a
+record up before it changes it. Read more: [mcp-server/README.md](mcp-server/README.md).
 
-### Road 1 — The REST API, via the `/ghl` skill 🔧 *the workshop*
-Complete, precise, scriptable. Every operation HighLevel offers, with exact control. This is the
-**default**, and it's what gets used for anything that matters: bulk work, exports, careful
-field-level edits, repeatable jobs.
+### Road 2 — The REST API, via the `/ghl` skill 🔧 *the workshop*
+The same HighLevel API driven from the command line, using the token in `.env`. Still the right
+tool for bulk work, exports, scheduled jobs and anything that has to run with nobody watching.
 
-### Road 2 — The LeadConnector MCP 💬 *the helpdesk*
-HighLevel's own official AI connector. Great for quick conversational lookups. Smaller and more
-restricted — it can't do everything the API can.
+### Road 2b — The hosted connector 🌐 *the front door, from anywhere*
+The same connector as Road 1, but running on a server you deploy once instead of on your
+laptop. People add a URL inside Claude — on the web, the desktop app, or their phone — sign in
+with their own HighLevel account, tick the sub-accounts they want (from more than one CRM if
+they work that way), and start asking. Nothing installed, nothing to keep updated on their
+machine. See [section 17](#17-the-hosted-connector-no-claude-code-needed).
+
+### Road 3 — The LeadConnector MCP 💬 *the helpdesk*
+HighLevel's own official AI connector. Fine for quick conversational lookups; smaller and more
+restricted than the other two, and it also needs the token in `.env`.
 
 | Situation | Road used |
 |---|---|
+| Anything in a normal conversation: look someone up, tag them, move a deal, check a calendar | 🚪 `ghl` |
+| You haven't connected the account yet | 🚪 `ghl` — just log in |
+| An unusual corner of HighLevel with no ready-made tool | 🚪 `ghl` — it can reach any endpoint |
 | Bulk work: export all, batch tag, dedupe, migrate | 🔧 API |
-| Careful edits to specific fields, custom fields & values | 🔧 API |
-| Forms, surveys, media, blogs, funnels, invoices, users | 🔧 API |
-| Anything scheduled or repeatable | 🔧 API |
-| "Find the contact for jane@example.com" | 💬 MCP |
-| A quick one-off read mid-conversation | 💬 MCP |
-| Checking what fields an operation needs before writing | 💬 MCP |
-| Listing sub-accounts (agency connection) | 💬 MCP |
+| Anything scheduled, automated, or run with no human present | 🔧 API |
+| Claude Code on the **web**, where a browser login can't work | 🔧 API (token in the environment) |
+| Someone who'll never open this folder — a client, or you on your phone | 🌐 hosted |
+| A quick lookup through HighLevel's own hosted connector | 💬 MCP |
 
-**The rule in one line:** the API is the superset, so it's the default; the MCP is a convenience
-layer. If an MCP tool is missing or errors, Claude falls back to the API automatically.
-
-**If the MCP never connects, nothing is lost** — the `/ghl` skill covers everything and reads
-`.env` directly. Fix it when convenient: [.claude/mcp-setup.md](.claude/mcp-setup.md).
+**The rule in one line:** log in and use the `ghl` server for conversation, drop to the `/ghl`
+scripts for scripted and bulk work. Nothing is lost either way — all three talk to the same
+HighLevel API.
 
 ---
 
@@ -704,8 +764,31 @@ claude-here.ps1 / .sh  How you start Claude. Loads .env first so both roads work
 accounts.conf          Registry of GHL sub-accounts this connector knows about (aliases +
                        display names + which env vars hold each one's token/location).
                        No secrets in this file — safe to read and commit.
-.mcp.json              Registers HighLevel's official MCP. Reads your token from the
-                       environment — the real value is never written into this file.
+.mcp.json              Registers both MCP servers: this repo's `ghl` server (no credentials
+                       needed — you log in) and HighLevel's official `leadconnector`, which
+                       reads your token from the environment. No real token is ever in here.
+
+PUBLISHING.md          How to publish the HighLevel marketplace app, so people can sign in
+                       with their HighLevel email and password. Only for the hosted version,
+                       and only once.
+
+mcp-server/            The `ghl` MCP server — the front door. Plain Node, no installing.
+  server.js            Starts it. Also `--login` to connect an account from the terminal,
+                       and `--list` to see every tool it offers.
+  src/                 The parts: the login page, the HighLevel client, the safety rails
+                       (confirm-before-sending, back-up-before-changing), and the tools.
+  test/run.js          65 self-checks. `npm test --prefix mcp-server` — needs no login.
+  README.md            How the server and its login work, in detail.
+
+remote/                The hosted version — the same tools, on a server, so nobody needs to
+                       install anything. See section 17.
+  server.js            Starts it. `--check` tells you if the configuration is sound.
+  src/                 The web server, the sign-in pages, and the OAuth machinery that lets
+                       any assistant connect safely.
+  Dockerfile           One-command deployment. docker-compose.yml alongside it.
+  .env.example         What to fill in: your URL and an encryption key.
+  test/run.js          54 self-checks against a real server. `npm test --prefix remote`.
+  README.md            Deploying it, and exactly how credentials are protected.
 .gitignore             Blocks .env, CRM exports and CSVs from ever being committed.
 .gitattributes         Line-ending housekeeping so scripts run on both Windows and Mac.
 
@@ -804,10 +887,27 @@ for every command · [.claude/mcp-setup.md](.claude/mcp-setup.md) for MCP detail
 ## 16. Working with more than one sub-account
 
 You don't need a separate folder, environment, or chat per sub-account (client, agency
-location, whatever you'd call it). One registry file — [accounts.conf](accounts.conf) — lets
-one ongoing conversation work with any of them, by name.
+location, whatever you'd call it). One ongoing conversation can work with any of them, by name.
 
-### How it works
+### The easy way: log in once per client
+
+```
+log in to my Kellix iQ account          →  then: "for Kellix iQ, list the vip contacts"
+log in to my GSP Events account         →  then: "for GSP Events, what's booked next week?"
+```
+
+Each login is saved under the short name you chose, and `ghl_accounts` lists them all. Ask
+Claude *"which GoHighLevel accounts am I connected to?"* any time.
+
+**Claude will never guess which client you meant.** Every tool requires you to name the account
+— even if only one is connected — because mixing up two clients' customers is exactly the
+mistake that must not happen. If you don't name one, it asks.
+
+### The token route: `accounts.conf`
+
+For the command-line helpers (and web sessions), the registry file
+[accounts.conf](accounts.conf) maps each short name to the environment variables holding that
+sub-account's token and Location ID.
 
 - The first sub-account you set up (Step 4 above) is the **default** — nothing changes for it.
 - Every *additional* sub-account gets: its own Private Integration Token + Location ID (from
@@ -850,6 +950,90 @@ The conversational LeadConnector MCP only ever talks to your **default** sub-acc
 every other one, Claude uses the REST API under the hood (via `--account`/`-Account`), which is
 the primary road anyway per [section 8](#8-the-two-roads-to-gohighlevel-api-vs-mcp). You don't
 need to do anything differently — just keep asking in plain English.
+
+---
+
+## 17. The hosted connector (no Claude Code needed)
+
+Everything so far assumes Claude Code is open on your computer. That's fine for you; it's a lot
+to ask of a client, or of yourself on a phone at 9pm.
+
+So there's a second way to run all of this: **deploy it once as a web service**, and then
+anyone just adds a URL.
+
+### What it looks like for them
+
+1. In Claude — web, desktop or mobile — they add a **custom connector** and paste your URL,
+   e.g. `https://ghl.yourdomain.com/mcp`.
+2. A page opens telling them **which app is asking for access**, with one button: **Sign in
+   with HighLevel**. They sign in on HighLevel's own site, with their own email and password.
+3. **They tick the sub-accounts they want.** Everything that login covers is listed, with
+   *Add all* for the whole lot. If their login covers exactly one sub-account, this screen is
+   skipped — no point asking a question with one answer.
+4. **Finish**, and they're back in Claude, connected to every sub-account they chose. They can
+   now ask for anything in section 6 — naming which sub-account they mean.
+
+For most people that's it: two clicks, no mention of anything else. **If someone genuinely
+works under two HighLevel agencies**, the review screen has a quiet *"Work in a second
+HighLevel account?"* option — they sign in to the other agency and its sub-accounts join the
+same connection rather than replacing the first. It stays tucked away unless they use it, so
+nobody with one CRM is nagged about a second.
+
+No install. No repository. No token pasted into a chat. Each person uses their own HighLevel
+login, with their own permissions and their own audit trail inside HighLevel.
+
+Two agencies with a client of the same name are kept apart rather than merged: the assistant
+sees `bluebird-childcare-mvp` and `bluebird-childcare-kellix`, and refuses to act on either
+until you say which one you mean.
+
+### What it looks like for you
+
+Three ways to host it, all already wired up in this repo — pick one:
+
+| | What you do | The store it needs |
+|---|---|---|
+| **Netlify** | Import the repo as a site, install the **Upstash Redis** extension, set two variables | Redis — the filesystem is wiped between requests |
+| **Vercel** | Import the repo, add **Upstash Redis** from the Marketplace, set two variables | Redis, same reason |
+| **Your own server** | The two lines below | The disk it already has |
+
+```bash
+cp remote/.env.example remote/.env     # set your URL and an encryption key
+docker compose -f remote/docker-compose.yml up -d
+```
+
+On Netlify or Vercel there is nothing to build and nothing to install — the connector has no
+dependencies. On your own server, point a domain at it with HTTPS (two lines of Caddy config —
+the guide has them) and you're live. Full instructions for all three, security details and
+operating notes: **[remote/README.md](remote/README.md)**.
+
+One thing to get right whichever you pick: **the URL has to stop changing.** It's the OAuth
+issuer, it's what every access token is bound to, and HighLevel accepts exactly one redirect
+URL — so set `PUBLIC_URL` to your real domain and connect through that, not through a deploy
+preview.
+
+The **Sign in with HighLevel** button needs one more thing, and only you can do it: a
+HighLevel **marketplace app**, created once in your agency. HighLevel has no way for a server
+to register itself, so this is unavoidable — it takes a few minutes and needs nobody's
+permission but yours. Step by step, including what HighLevel's reviewers look for if you ever
+want it publicly listed: **[PUBLISHING.md](PUBLISHING.md)**.
+
+Before that app exists there is nothing for people to sign in *with*, so `node
+remote/server.js --check` will tell you the configuration is not ready. If you want to try the
+connector first, set `ALLOW_TOKEN_CONNECT=true` and it will accept a Private Integration Token
+on the consent screen instead — useful for a smoke test, but not the experience to hand a
+client.
+
+### The same rules still apply
+
+Same tools, same guardrails as everything above: it won't act on a client you haven't named, it
+won't send a message or book an appointment without showing you exactly what it's about to do
+and waiting for your yes, and it backs records up before changing them. Those live in the code,
+not in a document someone has to remember to read.
+
+One difference worth knowing: each person's credentials are stored **encrypted on your server**
+rather than on their laptop. That's what makes it work from a phone — and it means the
+encryption key and the server backups are now your responsibility. The operating notes in
+[remote/README.md](remote/README.md) say exactly what to keep.
 
 ---
 

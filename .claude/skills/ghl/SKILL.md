@@ -9,17 +9,27 @@ Use this when you need to talk to HighLevel **programmatically**. For conversati
 "find this customer / book them in" flows the LeadConnector MCP is fine — but for everything
 else, and whenever an MCP tool is missing/restricted/erroring, use the API described here.
 
-## 0. Decision recap (API vs MCP)
+## 0. Decision recap (which channel)
 
-Prefer the **API** for: bulk ops, exports/backups, precise field-level edits, custom fields
-and custom values, forms/surveys submissions, workflow & campaign membership, products,
-invoices, payments, media, blogs, funnels, users, CI, reproducible runs, anything scripted.
-Prefer the **MCP** for: conversational lookup ("find the contact for jane@x.com"), quick
-one-off reads mid-chat, and discovering an operation's input shape via `search_operations` /
-`describe_operation`. When in doubt → **API** (it's the superset).
+**In a chat, prefer the `ghl` MCP server** ([mcp-server/](../../../mcp-server/)) — `ghl_*` tools
+over this same API, with per-person browser login (`ghl_login`), automatic `locationId`
+injection, confirmation gates on anything outbound, and backups before destructive writes. It
+also reaches endpoints with no typed tool via `ghl_search_operations` → `ghl_describe_operation`
+→ `ghl_request`.
+
+**Use the helper scripts below** for: bulk ops, exports/backups, batch jobs, CI, cron,
+reproducible runs, anything scripted — and for any environment where a loopback browser login
+is impossible (a cloud/web session), where the token comes from the environment instead.
+
+Prefer the **LeadConnector MCP** only for HighLevel's own hosted conversational lookup and live
+schema discovery (`search_operations` / `describe_operation`).
 Full table is in [CLAUDE.md](../../../CLAUDE.md).
 
 ## 1. Connection
+
+> The `ghl` MCP server does not use any of this — it has its own per-user login
+> (`ghl_login`) and stores credentials in `~/.ghl-mcp/`. The rest of this section is about the
+> helper scripts below, which read the environment exactly as they always have.
 
 Everything comes from `.env` at the repo root:
 

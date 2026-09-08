@@ -1,0 +1,4 @@
+# The connector is not something to index: every useful path is either an OAuth endpoint or
+# needs a bearer token.
+User-agent: *
+Disallow: /

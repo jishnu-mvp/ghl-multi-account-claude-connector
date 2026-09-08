@@ -1,0 +1,16 @@
+{
+  "name": "ghl-mcp-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Zero-dependency MCP server for GoHighLevel (HighLevel / LeadConnector) API v2, with browser login instead of pre-planted API credentials.",
+  "license": "MIT",
+  "type": "commonjs",
+  "main": "server.js",
+  "bin": { "ghl-mcp": "server.js" },
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node server.js",
+    "login": "node server.js --login",
+    "test": "node test/run.js"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "ghl-mcp-remote",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Hosted GoHighLevel MCP server: any MCP client connects over HTTP and each person authorises with their own HighLevel credentials via OAuth 2.1.",
+  "license": "MIT",
+  "type": "commonjs",
+  "main": "server.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test/run.js && node test/storage.js",
+    "doctor": "node server.js --check",
+    "test:flow": "node test/run.js",
+    "test:storage": "node test/storage.js"
+  }
+}

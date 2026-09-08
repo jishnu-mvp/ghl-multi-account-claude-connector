@@ -1,0 +1,36 @@
+# Netlify deployment for the hosted connector (remote/).
+#
+# There is nothing to build: the connector has no dependencies and no build step, so the
+# publish directory only carries what a browser might ask for directly, and every request
+# is served by the function. See remote/README.md for the environment variables, and
+# PUBLISHING.md for the HighLevel marketplace app that the sign-in needs.
+
+[build]
+  command = "node remote/server.js --check || true"
+  publish = "netlify/public"
+  functions = "netlify/functions"
+
+[functions]
+  # Bundle the connector and the shared tool layer it requires. esbuild follows the requires,
+  # but these are listed so a rename cannot quietly ship a half-empty function.
+  node_bundler = "esbuild"
+  included_files = ["remote/src/**", "mcp-server/src/**"]
+
+[functions."connector"]
+  # The OAuth and MCP endpoints are short; this is headroom for a slow HighLevel call, not a
+  # target. Netlify's synchronous ceiling is 30s (26s on the free tier).
+  timeout = 26
+
+# In-code routing (`export const config = { path: '/*' }`) already claims every path on
+# Functions v2. This redirect is the belt-and-braces version for older CLI versions and for
+# anyone who prefers the routing to be visible in the config.
+[[redirects]]
+  from = "/*"
+  to = "/.netlify/functions/connector"
+  status = 200
+  force = true
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Robots-Tag = "noindex"

@@ -1,15 +1,18 @@
 #!/usr/bin/env node
 /*
  * SessionStart hook for the GoHighLevel + Claude Code connector.
- * Warns the developer (and tells the model) if GHL credentials are not configured,
- * so someone who has never touched a Private Integration Token knows exactly what to do.
+ * Tells the model (and the developer) which GoHighLevel sub-accounts this session can
+ * actually reach, so nobody is told to "set up .env" when they are already connected —
+ * or left guessing when they are not.
+ *
+ * There are two ways to be connected, and this hook reports on both:
+ *   1. the `ghl` MCP server's browser login   -> ~/.ghl-mcp/credentials.json
+ *   2. environment variables / .env           -> GHL_PIT_TOKEN & friends (the original flow,
+ *                                                and the only one that works in a cloud session)
+ * Neither being present is not an error: the session just needs a ghl_login first.
  *
  * Cross-platform: runs under node, which Claude Code always ships with — no
- * cmd-vs-sh / PowerShell-vs-bash concerns.
- *
- * Reads .env (and the live environment) to check GHL_PIT_TOKEN, GHL_LOCATION_ID,
- * GHL_API_BASE_URL, GHL_API_VERSION. Emits JSON on stdout with additionalContext so
- * the running session is told the current setup state. Never prints token values.
+ * cmd-vs-sh / PowerShell-vs-bash concerns. Never prints token values.
  */
 const fs = require('fs');
 const path = require('path');
@@ -27,6 +30,40 @@ function findRepoRoot(start) {
 
 const repoRoot = findRepoRoot(process.cwd());
 const envFile = path.join(repoRoot, '.env');
+
+// Sub-accounts someone has logged in to through the `ghl` MCP server. Names and location ids
+// only — the file also holds tokens, which are never read here and never printed.
+function loggedInAccounts() {
+  const home = process.env.GHL_MCP_HOME
+    || path.join(process.env.HOME || process.env.USERPROFILE || '', '.ghl-mcp');
+  try {
+    const data = JSON.parse(fs.readFileSync(path.join(home, 'credentials.json'), 'utf8'));
+    return Object.values(data.accounts || {}).map((a) => ({
+      alias: a.alias,
+      displayName: a.displayName || a.alias,
+      authType: a.authType,
+    }));
+  } catch (_) {
+    return [];
+  }
+}
+
+// accounts.conf rows whose credentials are actually populated (the original flow). `resolve`
+// is the same .env-then-environment lookup used for the default account, so a filled-in .env
+// counts even when the session was not launched through the claude-here wrapper.
+function envAccounts(resolve) {
+  try {
+    return fs.readFileSync(path.join(repoRoot, 'accounts.conf'), 'utf8')
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter((l) => l && !l.startsWith('#'))
+      .map((l) => l.split('|').map((c) => c.trim()))
+      .filter((c) => c.length >= 4 && resolve(c[2]) && resolve(c[3]))
+      .map((c) => ({ alias: c[0], displayName: c[1] }));
+  } catch (_) {
+    return [];
+  }
+}
 
 const vals = {};
 if (fs.existsSync(envFile)) {
@@ -61,61 +98,74 @@ const shapeWarning =
       'Integration Token instead (Settings → Other Settings → Private Integrations). '
     : '';
 
-// "Configured" means the values are usable — whether they came from a .env file (the local-PC
-// flow) or are already live in the process environment (the cloud-environment flow, where
-// there's deliberately no .env file at all). File existence alone is NOT the signal — a cloud
-// session with real env vars and no .env file is fully working, not "not set up".
+// "Connected" means a credential is usable, from any source: a browser login, a .env file (the
+// local-PC flow), or live environment variables (the cloud flow, where there is deliberately no
+// .env at all). File existence alone is NOT the signal — a cloud session with real environment
+// variables and no .env file is fully working, not "not set up".
+const logins = loggedInAccounts();
+const envRegistered = envAccounts(get);
+
 let context;
 let systemMessage = null;
-if (missing.length) {
-  const where = envExists
-    ? '.env (see .claude/mcp-setup.md)'
-    : 'this environment\'s variables (a cloud session) or a local .env file (see .claude/mcp-setup.md)';
+
+// The `ghl` MCP server is the primary path now: someone logs in in their browser and is
+// working, with nothing in .env and no relaunch. So the question is not "is .env filled in"
+// but "can this session reach any sub-account at all, by any route".
+const connected = [
+  ...logins.map((a) => `${a.alias} (${a.displayName}, browser login${a.authType === 'oauth' ? ', HighLevel sign-in' : ''})`),
+  ...envRegistered
+    .filter((a) => !logins.some((l) => l.alias === a.alias))
+    .map((a) => `${a.alias} (${a.displayName}, environment variables)`),
+];
+
+const COMMON_RULES =
+  'Never fetch or act on any account\'s data unless the user named the account in that same ' +
+  'request — ask which one instead of defaulting, even if only one is available, per CLAUDE.md. ' +
+  'Say which account you used, by business name, in your reply. Anything outbound (a message, ' +
+  'an appointment, a workflow or campaign enrolment) or destructive needs explicit confirmation ' +
+  'first; the `ghl` MCP tools enforce this with a confirm flag and will hand you a dry run. ' +
+  'A 401/403 means the Private Integration is missing that scope — name the scope to add rather ' +
+  'than retrying or probing other endpoints.';
+
+if (connected.length) {
   context =
-    'GHL SETUP INCOMPLETE for the default account: these are not set: ' + missing.join(', ') + '. ' +
-    (!hasToken
-      ? 'Because GHL_PIT_TOKEN is empty, BOTH the /ghl API helper scripts AND the LeadConnector ' +
-        'MCP will fail for the default account — the MCP authenticates with the same Private ' +
-        'Integration Token. '
-      : '') +
-    (!hasLocation
-      ? 'Because GHL_LOCATION_ID is empty, every sub-account-scoped call (contacts, ' +
-        'conversations, opportunities, calendars) will fail — HighLevel requires a locationId. '
-      : '') +
+    'GHL CONNECTED. Sub-accounts this session can reach: ' + connected.join('; ') + '. ' +
     shapeWarning +
-    'Tell the user how to fix it: fill the missing values in ' + where + ', then (if using a ' +
-    'local .env) relaunch via the claude-here launcher so the token is loaded into the ' +
-    'environment. Note: other sub-accounts registered in accounts.conf are unaffected by this ' +
-    'and may still work fine — check accounts.conf before assuming nothing is connected.';
-  systemMessage =
-    '⚠️  GoHighLevel setup incomplete for the default account — missing: ' + missing.join(', ') +
-    '. See .claude/mcp-setup.md.';
-} else {
-  const tokenInProcess = !!(process.env.GHL_PIT_TOKEN && process.env.GHL_PIT_TOKEN.trim());
-  context =
-    'GHL default-account setup looks complete (GHL_PIT_TOKEN and GHL_LOCATION_ID both resolved, ' +
-    'from .env and/or the live environment; GHL_API_BASE_URL/GHL_API_VERSION use safe defaults ' +
-    'if unset). ' + shapeWarning +
-    (tokenInProcess
-      ? 'GHL_PIT_TOKEN is present in the process environment, so the leadconnector MCP server ' +
-        'should connect.'
-      : 'NOTE: GHL_PIT_TOKEN is only in .env, not in the process environment — if the ' +
-        'leadconnector server shows as failed in /mcp, the session was not launched via the ' +
-        'claude-here wrapper. Advise relaunching with `.\\claude-here.ps1` / `./claude-here.sh` ' +
-        'so .mcp.json can read the token. The /ghl API skill works either way; it reads .env ' +
-        'directly.') +
-    ' Follow the API-vs-MCP rules in CLAUDE.md: the REST API v2 (via the /ghl skill) is the ' +
-    'default and the superset; the MCP is the conversational convenience layer and only ever ' +
-    'reaches this default account — other accounts in accounts.conf go through the API with ' +
-    '--account/-Account. Never fetch or act on any account\'s data without the user naming it ' +
-    'in that request, per CLAUDE.md. A 401/403 on a specific endpoint usually means the Private ' +
-    'Integration is missing that scope — tell the user which scope to add rather than retrying ' +
-    'blindly.';
-  if (!tokenInProcess) {
+    'Use the `ghl` MCP server\'s tools (ghl_accounts to list, ghl_whoami to verify, then the ' +
+    'ghl_* tool for the job) — every one takes an `account` alias and there is no default. ' +
+    'The /ghl skill\'s helper scripts remain the right choice for scripted or bulk work, and ' +
+    'read the same environment variables as before. ' + COMMON_RULES;
+  if (missing.length && !envRegistered.length) {
     systemMessage =
-      'ℹ️  GHL .env is filled in, but GHL_PIT_TOKEN is not in this process. If the LeadConnector ' +
-      'MCP shows as failed in /mcp, relaunch via  .\\claude-here.ps1  /  ./claude-here.sh .';
+      'ℹ️  GoHighLevel: ' + connected.length + ' sub-account(s) connected via browser login. ' +
+      'GHL_PIT_TOKEN/GHL_LOCATION_ID are not set, so the legacy helper scripts and the ' +
+      'leadconnector MCP will not work for the default account — the `ghl` MCP server does.';
   }
+} else {
+  const cloud = !envExists;
+  context =
+    'GHL NOT CONNECTED YET — no sub-account is reachable in this session: nobody has logged in ' +
+    'through the `ghl` MCP server (~/.ghl-mcp/credentials.json is empty or absent) and no ' +
+    'account\'s environment variables are set' +
+    (missing.length ? ' (missing: ' + missing.join(', ') + ')' : '') + '. ' +
+    shapeWarning +
+    'THE FIX, in this order: (1) call the `ghl` MCP tool ghl_login and give the user the ' +
+    '127.0.0.1 link it returns — they log in in their own browser with their HighLevel ' +
+    'Private Integration Token or their HighLevel email and password, and nothing needs to be ' +
+    'edited, committed or relaunched; then call ghl_login_status. ' +
+    (cloud
+      ? '(2) BUT NOTE: this session has no .env, which usually means a cloud/web session — a ' +
+        '127.0.0.1 login page is not reachable from the user\'s browser there. In that case set ' +
+        'the account\'s token and Location ID in this environment\'s variables panel instead ' +
+        '(the names are listed in accounts.conf), which both the `ghl` server and the /ghl ' +
+        'helper scripts read.'
+      : '(2) Alternatively, the original flow still works: fill GHL_PIT_TOKEN and ' +
+        'GHL_LOCATION_ID in .env (see .claude/mcp-setup.md) and relaunch via the claude-here ' +
+        'launcher.') + ' ' +
+    'Do not attempt CRM calls until one of those is done — they will 401. ' + COMMON_RULES;
+  systemMessage =
+    '⚠️  GoHighLevel: no sub-account connected yet. Ask Claude to "log in to <client>" — it will ' +
+    'give you a browser link (no .env editing, no relaunch).';
 }
 
 const out = {

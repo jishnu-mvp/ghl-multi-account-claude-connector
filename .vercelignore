@@ -1,0 +1,20 @@
+# Only the connector needs to ship. Everything else in the repo is for humans and for
+# Claude Code sessions, and would just slow the build down.
+.claude
+docs
+*.md
+!remote/README.md
+setup.ps1
+setup.sh
+claude-here.ps1
+claude-here.sh
+accounts.conf
+.env
+.env.example
+remote/.env
+remote/data
+remote/test
+remote/Dockerfile
+remote/docker-compose.yml
+mcp-server/test
+data

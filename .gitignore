@@ -34,3 +34,15 @@ Thumbs.db
 # Local scratch/build tooling (e.g. node_modules from generating docs) — not part of the repo
 scratch/
 node_modules/
+
+# Hosted server state: OAuth clients, grants and ENCRYPTED GoHighLevel credentials.
+# Never commit it — it is other people's access to their CRMs.
+remote/data/
+data/
+*.encryption-key
+.encryption-key
+
+# Deploy-tool working directories. The committed config (netlify.toml, vercel.json) is the
+# source of truth; these are local caches the CLIs create.
+.netlify/
+.vercel/

@@ -1,0 +1,35 @@
+# Run the hosted connector with one command:
+#
+#   cp remote/.env.example remote/.env     # fill in PUBLIC_URL + ENCRYPTION_KEY
+#   docker compose -f remote/docker-compose.yml up -d
+#
+# This exposes plain HTTP on 8787. Put TLS in front of it — a platform router, Caddy,
+# nginx, or Cloudflare — because OAuth 2.1 requires HTTPS and HighLevel will not accept a
+# non-HTTPS redirect URL. See remote/README.md for a Caddy example.
+
+services:
+  ghl-mcp:
+    build:
+      context: ..
+      dockerfile: remote/Dockerfile
+    image: ghl-mcp-remote:latest
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "127.0.0.1:8787:8787"
+    volumes:
+      - ghl-data:/data
+    # Nothing in the image needs to be written to; only /data does.
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  ghl-data:

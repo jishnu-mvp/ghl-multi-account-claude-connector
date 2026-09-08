@@ -1,5 +1,10 @@
 {
   "mcpServers": {
+    "ghl": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["${CLAUDE_PROJECT_DIR:-.}/mcp-server/server.js"]
+    },
     "leadconnector": {
       "type": "http",
       "url": "https://services.leadconnectorhq.com/mcp/anthropic/v2",

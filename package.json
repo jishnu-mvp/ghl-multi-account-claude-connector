@@ -1,0 +1,19 @@
+{
+  "name": "ghl-claude-connector",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Connect GoHighLevel to Claude: an MCP server with browser login (mcp-server/) and a hosted, OAuth 2.1 remote server (remote/).",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node mcp-server/test/run.js && node remote/test/run.js && node remote/test/storage.js",
+    "test:local": "node mcp-server/test/run.js",
+    "test:remote": "node remote/test/run.js && node remote/test/storage.js",
+    "start": "node remote/server.js",
+    "doctor": "node remote/server.js --check",
+    "login": "node mcp-server/server.js --login",
+    "tools": "node mcp-server/server.js --list"
+  }
+}

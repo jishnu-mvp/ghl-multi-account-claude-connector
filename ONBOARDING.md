@@ -10,13 +10,22 @@ this up in about ten minutes.
 
 ## The headline feature: one chat, every client
 
-This connector supports **multiple GoHighLevel sub-accounts from a single ongoing
+This connector now supports **multiple GoHighLevel sub-accounts from a single ongoing
 conversation**. You don't open a different tool, folder, or chat per client — you just name the
-client in your request, and Claude uses the right credentials automatically. This repo ships
-with one example account (a placeholder called `MVP Ventures` in `accounts.conf`) — you add
-your own clients on top of it, following the same pattern, in a couple of minutes each.
+client in your request, and Claude uses the right credentials automatically. Today it's already
+wired up for:
 
-You only connect the clients **you** personally work with. Nothing is pre-connected for you.
+| Client |
+|---|
+| MVP Ventures |
+| Kellix iQ |
+| GSP Events |
+| Flout Software |
+| Bluebird Childcare |
+| Djinda Dreaming Education |
+| Chambers Childcare |
+
+You'll only connect the clients **you** personally work with — you don't need all seven.
 
 There is one hard rule baked into this connector, and it exists to protect real client data:
 **Claude will never fetch or change anything in a GHL account unless you name that account in
@@ -44,7 +53,7 @@ ask whoever manages your team's Claude/Anthropic account to confirm or invite yo
 3. Give it a name you'll recognize, e.g. `GHL Cloud Environment — <your name>`.
 4. Point it at this GitHub repository:
    ```
-   https://github.com/jishnu-mvp/ghl-multi-account-claude-connector
+   https://github.com/jishnu-mvp/ghl-claude-connector
    ```
    branch `main`.
 
@@ -76,19 +85,26 @@ For **each** client you personally need to work with:
    copy it immediately.**
 6. Also grab that sub-account's **Location ID** from **Settings → Business Profile**.
 
-### Step 5 — Add your token to the environment, and register the client
+### Step 5 — Add your token to the environment
 
-Back in your cloud environment's settings, find **Environment variables**. For the **first**
-client, you can reuse the default (unsuffixed) pair straight away:
-```
-GHL_PIT_TOKEN=pit-...your-token...
-GHL_LOCATION_ID=...that-sub-account's-location-id...
-```
+Back in your cloud environment's settings, find **Environment variables**. For each client from
+Step 4, add two lines using the **exact variable names already assigned to that client** —
+these are fixed by this repo's `accounts.conf` file, so use the table below, not your own names:
 
-For **every additional** client, pick a short alias (e.g. `clienta`) and add a suffixed pair:
+| Client | Token variable | Location variable |
+|---|---|---|
+| MVP Ventures | `GHL_PIT_TOKEN` | `GHL_LOCATION_ID` |
+| Kellix iQ | `GHL_PIT_TOKEN_KELLIXIQ` | `GHL_LOCATION_ID_KELLIXIQ` |
+| GSP Events | `GHL_PIT_TOKEN_GSP` | `GHL_LOCATION_ID_GSP` |
+| Flout Software | `GHL_PIT_TOKEN_FLOUT` | `GHL_LOCATION_ID_FLOUT` |
+| Bluebird Childcare | `GHL_PIT_TOKEN_BLUEBIRDCHILDCARE` | `GHL_LOCATION_ID_BLUEBIRDCHILDCARE` |
+| Djinda Dreaming Education | `GHL_PIT_TOKEN_DJINDADREAMING` | `GHL_LOCATION_ID_DJINDADREAMING` |
+| Chambers Childcare | `GHL_PIT_TOKEN_CHAMBERSCHILDCARE` | `GHL_LOCATION_ID_CHAMBERSCHILDCARE` |
+
+Example, if you're connecting Kellix iQ:
 ```
-GHL_PIT_TOKEN_CLIENTA=pit-...your-token...
-GHL_LOCATION_ID_CLIENTA=...that-sub-account's-location-id...
+GHL_PIT_TOKEN_KELLIXIQ=pit-...your-own-token...
+GHL_LOCATION_ID_KELLIXIQ=...that-sub-account's-location-id...
 ```
 
 **Formatting rules that matter** (this trips people up):
@@ -96,13 +112,11 @@ GHL_LOCATION_ID_CLIENTA=...that-sub-account's-location-id...
 - No space inside the variable name.
 - One `KEY=value` pair per line.
 
-Then open [accounts.conf](accounts.conf) in the repo and add one line mapping that alias to a
-display name and the two variable names, e.g.:
-```
-clienta|Client A|GHL_PIT_TOKEN_CLIENTA|GHL_LOCATION_ID_CLIENTA
-```
-Full instructions with more detail are in the comments at the top of that file. From then on,
-just say "Client A" (or whatever alias/name you chose) in your requests.
+Only add the clients *you* actually work with. Skip the rest.
+
+Want to add a client that **isn't** in the table above? That's an additive step, not a
+re-install — see [accounts.conf](accounts.conf) in the repo for the exact instructions, or just
+ask Claude to walk you through it once you're set up.
 
 ### Step 6 — Save, and start a new chat
 
@@ -113,7 +127,7 @@ chat that predates the save, it won't see your new values).
 ### Step 7 — Try it
 
 Ask something simple and safe first, naming a client you connected:
-> "Check that you're connected to Client A and tell me the business name."
+> "Check that you're connected to Kellix iQ and tell me the business name."
 
 If that comes back correctly, you're fully set up.
 
@@ -128,8 +142,8 @@ own environment (same shared repo/code, personal credentials and chat history).
 
 ## Part 2 — What this connector can actually do
 
-This isn't a guess — it's from a real, live verification run against a connected HighLevel
-account, checking each area of the API directly rather than assuming from documentation.
+This isn't a guess — it's from a real, live verification run across all seven connected
+accounts, checking each area of the API directly rather than assuming from documentation.
 
 ### ✅ Confirmed working, for every connected client
 
@@ -147,14 +161,14 @@ account, checking each area of the API directly rather than assuming from docume
 | **The escape hatch** | Any other HighLevel v2 API endpoint not listed above, via a direct request |
 
 Real examples you can just type:
-> "Find the contact for jane@example.com in Client A and show me her tags."
+> "Find the contact for jane@example.com in Chambers Childcare and show me her tags."
 
-> "For Client A, list every deal in the Sales pipeline sitting in the Proposal stage."
+> "For Kellix iQ, list every deal in the Sales pipeline sitting in the Proposal stage."
 
-> "Compare this month's new contact counts between Client A and Client B."
+> "Compare this month's new contact counts between GSP Events and Flout Software."
 
-> "Add the tag `follow-up-q3` to contact abc123 in Client A." *(Claude will describe the exact
-> change and wait for you to say yes first)*
+> "Add the tag `follow-up-q3` to contact abc123 in Bluebird Childcare." *(Claude will describe
+> the exact change and wait for you to say yes first)*
 
 ### ❌ What's not possible — even with full permissions
 
@@ -165,8 +179,8 @@ These are hard limits of HighLevel's own API, not something more setup fixes:
 | Building a workflow, funnel, or email template design | HighLevel has no API for *authoring* these — UI-only, always. Claude can enroll contacts into an existing workflow and read the list, but can't build one. |
 | "Run this workflow right now" | No such endpoint exists. The only way in is enrolling a contact (which triggers it), or an Inbound Webhook set up inside the workflow. |
 | Undoing a change | No undo, no sandbox, ever. This is exactly why Claude confirms before anything that writes. |
-| Agency-wide operations (e.g. listing other sub-accounts, snapshots, billing) | A sub-account token structurally cannot do this — confirmed with a `403` on a connected account. Would need a separate, bigger-scope agency credential. |
-| Custom menu links | Found a consistent gap here — a clean scope refusal that doesn't seem to be exposed through Private Integrations at all, regardless of what's ticked. Minor; unlikely to matter day to day. |
+| Agency-wide operations (e.g. listing other sub-accounts, snapshots, billing) | A sub-account token structurally cannot do this — confirmed with a `403` on every single connected account. Would need a separate, bigger-scope agency credential. |
+| Custom menu links | Found one consistent gap here across every account — a clean scope refusal that doesn't seem to be exposed through Private Integrations at all, regardless of what's ticked. Minor; unlikely to matter day to day. |
 
 ### The two safety habits worth knowing before you start
 
@@ -187,9 +201,8 @@ Full rules live in [CLAUDE.md](CLAUDE.md); the complete command reference is in
 No. Everything above happens by clicking through web pages and pasting values into a couple of
 text boxes. Once it's set up, you just type or talk in plain English.
 
-**What if I only need one client?**
-Totally fine — the default (unsuffixed) pair in Step 5 already covers your first one. Only add
-more if you actually need more.
+**What if I only need one client, not all seven?**
+Totally fine — only do Step 4/5 for the client(s) you actually work with.
 
 **I added my token but Claude says it's not connected.**
 Make sure you started a **new chat** after saving the environment variables — an already-open

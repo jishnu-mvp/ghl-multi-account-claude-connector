@@ -1,16 +1,53 @@
-# The HighLevel (LeadConnector) MCP server — already wired into this repo
+# MCP servers in this repo
 
-This project ships a committed [`.mcp.json`](../.mcp.json) that registers HighLevel's **official**
-MCP server as `leadconnector`. When you open this folder in Claude Code, the session auto-detects
-it and connects — **as soon as you provide your own Private Integration Token** (see below). No
-`claude mcp add` needed.
+The committed [`.mcp.json`](../.mcp.json) registers **two** MCP servers. Claude Code picks both
+up automatically when you open this folder — no `claude mcp add` needed.
 
-The MCP is optional. The REST API v2 (via the `/ghl` skill) covers everything and more; the MCP
-is the convenient layer for conversational lookups, quick reads, and discovering an operation's
-input schema. See the decision rules in [../CLAUDE.md](../CLAUDE.md).
+| Server | What it is | Setup needed |
+|---|---|---|
+| **`ghl`** | This repo's own server ([../mcp-server/](../mcp-server/)): ~100 tools over the whole HighLevel API v2, with a **browser login per person** | **None.** Call `ghl_login` and log in |
+| **`leadconnector`** | HighLevel's official hosted server | A `pit-…` token in `GHL_PIT_TOKEN` + `GHL_LOCATION_ID`, in the environment |
 
-## What's already configured
-`.mcp.json` at the repo root:
+**Start with `ghl`.** It needs nothing configured, covers more, and enforces this repo's safety
+rules in code. See the decision rules in [../CLAUDE.md](../CLAUDE.md).
+
+> **Not using Claude Code at all?** The same connector can be deployed as a hosted service that
+> anyone adds by URL from Claude on the web, desktop or mobile — see
+> [../remote/README.md](../remote/README.md), and [../PUBLISHING.md](../PUBLISHING.md) for the
+> HighLevel marketplace app that turns it into a proper "sign in with HighLevel" button.
+
+---
+
+## `ghl` — log in instead of configuring
+
+```
+You:    connect our Kellix iQ account
+Claude: (ghl_login) → open http://127.0.0.1:52413/?k=…
+You:    (on that page: paste your pit-… token, or click "Log in with HighLevel")
+Claude: (ghl_login_status) → Logged in: Kellix iQ (alias "kellixiq")
+```
+
+- The page runs on **your** machine and is reachable only from it. What you type is saved to
+  `~/.ghl-mcp/credentials.json` (mode `0600`) — never to this repo, never to the chat.
+- Paste an **agency-level** token and it lists your sub-accounts and lets you pick.
+- **"Log in with HighLevel"** (HighLevel email + password, on HighLevel's own site) appears once
+  a marketplace app is configured — a one-time, three-minute job for the agency, which the login
+  page walks through. Full detail in [../mcp-server/README.md](../mcp-server/README.md).
+- Without a chat at all: `node mcp-server/server.js --login --account kellixiq`.
+- **In a cloud / web session the loopback page is unreachable** from your browser. Set that
+  account's token and Location ID as environment variables there instead (names in
+  [`../accounts.conf`](../accounts.conf)); the `ghl` server reads those too.
+
+Multiple sub-accounts: every `ghl_*` tool takes `account: "<alias>"` and **has no default** — an
+omitted account is refused rather than guessed. `ghl_accounts` lists what is connected,
+`ghl_whoami` proves one works.
+
+---
+
+## `leadconnector` — HighLevel's hosted server
+
+### What's already configured
+The `leadconnector` entry in `.mcp.json`:
 ```json
 {
   "mcpServers": {
@@ -49,7 +86,7 @@ safe to share.
 > `locationId` is technically optional in the MCP handshake, but HighLevel needs it for any
 > sub-account-scoped data. Keep it in the headers rather than hoping a prompt supplies it.
 
-## What to do (once)
+### What to do (once)
 1. In HighLevel: **Settings → Other Settings → Private Integrations → Create new Integration**.
    Name it (e.g. `Claude Code — <your name>`), **tick the scopes you need** (see the scope map in
    [skills/ghl/SKILL.md](skills/ghl/SKILL.md#4-scopes-the-1-cause-of-4xx)), then copy the

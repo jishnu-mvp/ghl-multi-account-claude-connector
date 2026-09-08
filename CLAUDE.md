@@ -3,14 +3,30 @@
 This repo connects Claude Code to a GoHighLevel (HighLevel / LeadConnector) sub-account. Any
 Claude Code session working here MUST follow the rules below.
 
-You have **two ways** to reach GoHighLevel, and **both authenticate with the same credential**:
-a **Private Integration Token** (`pit-…`) generated in the sub-account.
+You have **four ways** to reach GoHighLevel. The first two are this repo's own; both share one
+tool layer, so they behave identically.
 
-1. **HighLevel API v2 (REST)** — full-power, scriptable. Use for anything programmatic.
-2. **LeadConnector MCP** — a smaller discover-then-execute toolkit hosted by HighLevel.
+1. **The `ghl` MCP server** (in [mcp-server/](mcp-server/), registered in [.mcp.json](.mcp.json)) —
+   for a Claude Code session on this repo. Covers the whole surface below as ~100 tools, and
+   each person **logs in with their own GoHighLevel credentials in a browser** (`ghl_login`)
+   instead of a token being placed in `.env` first. Nothing to install or configure; it
+   enforces the safety rules on this page in code. **Start here in a Claude Code session.**
+2. **The hosted connector** (in [remote/](remote/)) — the same tools served over HTTPS as a
+   remote MCP server, for people who never touch this repo or Claude Code. They add its URL in
+   Claude (web, desktop, mobile), Cursor or any MCP client, sign in with their **own HighLevel
+   email and password**, tick the sub-accounts to share — and, if they work across more than
+   one HighLevel agency, sign in again and add that CRM's sub-accounts to the same connection.
+   Deploy notes in [remote/README.md](remote/README.md); the marketplace app that makes the
+   sign-in possible is in [PUBLISHING.md](PUBLISHING.md) and is **required** for this route.
+3. **HighLevel API v2 (REST)** via the `/ghl` skill's helper scripts — the same API, driven from
+   the shell. Still the right tool for scripted, bulk and CI work, and for a cloud session where
+   a browser login is impossible. Authenticates with a **Private Integration Token** (`pit-…`)
+   from the environment or `.env`.
+4. **LeadConnector MCP** — a smaller discover-then-execute toolkit hosted by HighLevel, also on
+   the Private Integration Token.
 
-They overlap but are not equal. The API can do more; the MCP is a convenience layer. **Read the
-decision rules below and pick the right one every time.**
+All four talk to the same API v2. **Read the decision rules below and pick the right one every
+time.**
 
 ---
 
@@ -18,18 +34,38 @@ decision rules below and pick the right one every time.**
 
 | Situation | Use |
 |---|---|
-| Bulk / scripted ops (list all contacts, batch tag, export, migrate, dedupe, reconcile) | **REST API** |
-| Precise field-level writes, custom fields & custom values, tag vocabulary | **REST API** |
-| Anything the MCP toolkit doesn't cover or covers awkwardly (forms/survey submissions, media, blogs, funnels, invoices, email templates, users) | **REST API** |
-| CI/CD, cron syncs, automated tests, reproducible runs | **REST API** |
-| Conversational "find the contact for jane@example.com" / "what's in their timeline?" | **MCP** (`search` → `fetch`) |
-| Quick one-off read mid-chat where exact shape doesn't matter | **MCP** |
-| Discovering an operation's input schema before you write a request | **MCP** (`search_operations` → `describe_operation`) |
-| You're unsure whether the MCP covers it | **Try the API** — it is the superset |
+| Anything in a chat: look someone up, read a timeline, tag a contact, move an opportunity, check a calendar, send a message | **`ghl` MCP server** (`ghl_*` tools) |
+| Nobody has connected the account yet | **`ghl` MCP server** — `ghl_login`, then `ghl_login_status`. No `.env`, no relaunch |
+| An endpoint with no typed tool | **`ghl` MCP server** — `ghl_search_operations` → `ghl_describe_operation` → `ghl_request` |
+| Bulk / scripted ops (export every contact, batch tag, migrate, dedupe, reconcile) | **REST API** via `/ghl` helper scripts |
+| CI/CD, cron syncs, reproducible runs, anything that must work with no human present | **REST API** via `/ghl` helper scripts |
+| A cloud / web session, where a `127.0.0.1` login page is unreachable | **REST API** with that account's environment variables |
+| Someone who will never open this repo — a client, a teammate on their phone | **the hosted connector**: they add its URL in their own assistant and authorise it themselves |
+| Conversational lookup when you would rather use HighLevel's own hosted toolkit | **LeadConnector MCP** (`search` → `fetch`) |
+| Discovering an operation's live input schema straight from HighLevel | **LeadConnector MCP** (`search_operations` → `describe_operation`) |
 
-**Default: reach for the REST API v2.** The MCP is a convenience layer for conversational
-lookup and schema discovery; the API is the complete surface. If an MCP tool errors, is
-missing, or is restricted, immediately fall back to the API via the `/ghl` skill.
+**Default: the `ghl` MCP server.** It is the complete surface (typed tools plus
+`ghl_request`), it is the only path that needs no prior setup, and it enforces the rules below
+rather than trusting them to be remembered. Drop to the `/ghl` helper scripts for scripted and
+bulk work, or when a browser login cannot happen. If a `ghl_*` tool errors, read what it says —
+it names the account, the request and the scope — rather than switching channels and retrying.
+
+### The `ghl` MCP server (this repo's own)
+- ✅ ~100 tools across contacts, tags, notes, tasks, conversations & messaging, opportunities &
+  pipelines, calendars & appointments, workflows & campaigns, forms, surveys, custom fields &
+  values, users, products, invoices, payments, media, funnels, links, businesses, blogs, social
+- ✅ `ghl_search_operations` → `ghl_describe_operation` → `ghl_request` reaches **every** API v2
+  endpoint, catalogued or not — so it is a superset, not a subset
+- ✅ **Browser login per person** — `ghl_login` returns a `127.0.0.1` link; they paste their own
+  Private Integration Token, or sign in with their HighLevel email and password where the
+  marketplace app is configured. The credential never enters the chat or the repo
+- ✅ Multi-account by design: every tool takes an `account` alias and **has no default**
+- ✅ Reads the existing `accounts.conf` + environment variables too, so nothing that worked
+  before stops working
+- ❌ The login page is loopback-only — no use in a cloud/web session (use env vars there)
+- ❌ Cannot exceed the credential's scopes; a missing scope is a hard 401/403, not a retry
+- ⚠️ Full email/password sign-in needs a HighLevel marketplace app registered once by the
+  agency — see [mcp-server/README.md](mcp-server/README.md). The token path needs nothing
 
 ### What the LeadConnector MCP can do (and its limits)
 - ✅ `search` / `fetch` — find and read contacts and business records conversationally
@@ -51,7 +87,10 @@ missing, or is restricted, immediately fall back to the API via the `/ghl` skill
 
 ## How to actually call the API
 
-**Do not hand-write curl from scratch.** Use the `/ghl` skill — it has ready helper scripts
+**In a chat, prefer the `ghl` MCP server's tools** — they inject `locationId` the way each
+endpoint expects, gate the dangerous calls, and back records up before changing them.
+
+**For scripted or bulk work, do not hand-write curl from scratch.** Use the `/ghl` skill — it has ready helper scripts
 (PowerShell for Windows, bash for macOS/Linux) covering contacts, tags, notes, tasks,
 conversations & messaging, opportunities & pipelines, calendars & appointments, forms, surveys,
 custom fields, users, workflows, campaigns, products, invoices, payments, media and more, plus
@@ -59,7 +98,13 @@ the full endpoint reference and the scope→endpoint map.
 
 Invoke it with `/ghl`, or read [.claude/skills/ghl/SKILL.md](.claude/skills/ghl/SKILL.md).
 
-### Connection (one-time)
+### Connection
+
+**Through the `ghl` MCP server (no setup):** call `ghl_login`, hand the user the link, they log
+in in their browser. Credentials are stored per-user in `~/.ghl-mcp/credentials.json` (mode
+`0600`), never in this repo. Nothing to copy, commit or relaunch.
+
+**For the helper scripts, the LeadConnector MCP, or a cloud session (one-time):**
 1. Copy `.env.example` → `.env` and fill in your own values.
 2. Get your token from HighLevel: **Settings → Other Settings → Private Integrations →
    Create new Integration** → tick scopes → copy the `pit-…` token (**shown once**).
@@ -85,6 +130,9 @@ This connector can serve more than one GHL sub-account from a single ongoing ses
 [accounts.conf](accounts.conf) at the repo root is the registry (alias, display name, and which
 env vars hold that account's token/location; no secrets in that file, it's safe to read/commit).
 
+- **The `ghl` MCP server's tools all take `account: "<alias>"` and have no default at all** —
+  an omitted account is refused with the list of aliases to ask about. Aliases come from
+  `ghl_accounts`, which merges browser logins with the `accounts.conf` rows.
 - **The `/ghl` skill's helper scripts take `--account <alias>` / `-Account <alias>`.** Omitting
   it uses the default account (the row whose token env var is `GHL_PIT_TOKEN`).
 - **The LeadConnector MCP only ever talks to the default account.** For any other configured
@@ -93,16 +141,18 @@ env vars hold that account's token/location; no secrets in that file, it's safe 
 - **Never fetch, read, or act on GHL data unless the user has named the account in that same
   request — no exceptions, and no silent default, even when only one account is configured.**
   "Show me our tags" with no client named is not a request to act on — it's a request to ask
-  "which account: MVP Ventures or Client A?" first. Only a message that itself names the
+  "which account: MVP Ventures or Kellix iQ?" first. Only a message that itself names the
   account (or unambiguously implies it, e.g. continuing a thread that already named one) may be
   acted on. This applies to every read and every write, not just writes. Two real businesses'
   contacts, conversations, and money live behind these accounts; a mixed-up account is the same
   category of mistake as a mixed-up contact.
 - **Always state which account you used, by display name, in the response itself** — don't
   make the user infer it from context.
-- **Adding an account is additive, not a re-setup.** New Private Integration in that sub-account
-  → its token/location go into two new env vars with a unique suffix → one new row in
-  `accounts.conf`. No new environment, no new chat, no code changes.
+- **Adding an account is additive, not a re-setup.** Easiest: `ghl_login` with a new alias —
+  the person logs in and it is available immediately, with no file to edit. For the helper
+  scripts: new Private Integration in that sub-account → its token/location go into two new env
+  vars with a unique suffix → one new row in `accounts.conf`. No new environment, no new chat,
+  no code changes either way.
 
 ---
 
@@ -164,15 +214,61 @@ env vars hold that account's token/location; no secrets in that file, it's safe 
 
 ## Architecture decisions Claude must respect
 
-- **The REST API v2 is the source of truth and the default channel.** The MCP is a convenience
-  layer only — never let MCP behaviour override the API-vs-MCP rules above.
-- **Authentication is a Private Integration Token, not OAuth and not a v1 API key.** Don't
-  introduce an OAuth app, a v1 `Bearer` JWT, or a third-party GHL MCP without explicit agreement.
+- **The REST API v2 is the source of truth.** The `ghl` MCP server is a typed, safety-enforcing
+  wrapper over exactly that API — nothing more. Never let a third-party MCP's behaviour override
+  the rules above.
+- **The `ghl` MCP server is the default channel in a chat**, and the `/ghl` helper scripts are
+  the default for scripted and bulk work. Keep the two in step: an endpoint added to one should
+  be reachable from the other (the server's `ghl_request` covers this automatically).
+- **There is ONE tool layer** ([mcp-server/src/tools/](mcp-server/src/tools/)), serving both the
+  local stdio server and the hosted connector. Add a tool once and both get it. The only
+  per-deployment difference is the session tools (`session.js` vs `remote-session.js`).
+- **Credentials reach the tools through [context.js](mcp-server/src/context.js)**
+  (AsyncLocalStorage), never a module-level "current account". That is what keeps the hosted
+  server's concurrent tenants isolated — do not add an ambient credential global.
+- **The hosted connector's connect flow accumulates and is finished explicitly.** Sign-in is
+  repeatable (once per CRM), each sign-in's sub-account picks are added to what is already
+  attached, and **only `/oauth/connect/finish` issues an authorization code**. Do not make a
+  sign-in or a selection hand a code back: that would cap a connection at one CRM, which is
+  the bug the flow exists to avoid. Signing in to the next agency must clear the previous
+  one's pending picker.
+- **The multi-CRM option stays proportional to the evidence for it.** Most people have one
+  HighLevel account, so the review screen leads with Finish and keeps "sign in to another
+  CRM" behind a collapsed `<details>` — open only once two CRMs are attached. A login that
+  covers exactly one sub-account skips the checklist altogether. Do not promote either back
+  into the main flow: capability the multi-CRM person needs must not become friction the
+  single-CRM person pays for.
+- **Aliases are computed per grant, not stored.** Two agencies can each have a "Bluebird
+  Childcare", so [tenants.js](remote/src/tenants.js) qualifies a colliding alias with the CRM
+  (`bluebird-childcare-kellix`) and only then falls back to an id fragment. Never resolve an
+  account by display name alone, and never let an alias from one grant be visible in another.
+- **The hosted connector is its own OAuth 2.1 authorization server** and must stay compliant:
+  PKCE S256 only, exact redirect matching, public clients only, rotating refresh tokens with
+  reuse detection, and tokens bound to its own resource URI. Never forward a client's token to
+  HighLevel; the HighLevel credential is separate and stays server-side.
+- **One connection, one credential.** Two people authorising the same sub-account get two
+  separate tenant records. Never make connections share a stored credential — one person's
+  calls must never run under another's token.
+- **Two authentication mechanisms are supported, both the user's own credential:** a
+  **Private Integration Token**, and **HighLevel OAuth 2.0** through a marketplace app. The
+  hosted connector defaults to OAuth only — `ALLOW_TOKEN_CONNECT` is `false`, so nobody is
+  asked to paste a token — while the local server and the helper scripts still take either. Do not introduce a v1 API key,
+  a v1 `Bearer` JWT, or a third-party GHL MCP without explicit agreement.
+- **Credentials are per person and live outside the repo** — `~/.ghl-mcp/credentials.json` at
+  mode `0600`, or environment variables. Never a tracked file, never the chat transcript.
+- **The `ghl` MCP server has no dependencies and no build step**, and its safety rules
+  (account required, confirm-before-outbound, read-before-write, token redaction, rate limit)
+  are code with tests behind them. Do not weaken them for convenience; `npm test --prefix
+  mcp-server` must stay green.
 - **`.mcp.json` reads its credentials from `${GHL_PIT_TOKEN}` / `${GHL_LOCATION_ID}`.** Never
   hardcode them into it.
 - **Secrets live only in `.env`** (git-ignored), never in committed files, exports, or logs.
 - **This is a tooling/connector repo.** Keep CRM *data* (contact exports, CSVs, conversation
   dumps) out of it — `.gitignore` already excludes the common ones.
+- **The app stays a Node `(req, res)` handler.** [serverless.js](remote/src/serverless.js) is
+  the single place that adapts it to Web `Request`/`Response` for Netlify-style platforms —
+  do not fork the router or write a second app for a platform. The test suite re-runs the
+  whole flow through that adapter as well as over a socket, so keep it that way.
 - **Cross-platform parity:** every helper ships PowerShell + bash; the SessionStart hook runs
   under `node` (exec form) to stay OS-agnostic. Preserve this.
 - Do not restructure `.claude/`, the skill, the hooks, or the launch flow without discussing it
@@ -193,6 +289,10 @@ env vars hold that account's token/location; no secrets in that file, it's safe 
   explicit user confirmation** and a prior export.
 - ❌ Overwriting a record without first fetching and backing up its current state.
 - ❌ Retrying or working around a 401/403 instead of reporting the missing scope.
+- ❌ Passing `confirm: true` to a `ghl_*` tool on the user's behalf — that flag represents a
+  human saying yes to this exact action, after seeing the dry run.
+- ❌ Asking the user to paste a `pit-…` token into the chat. Send them through `ghl_login`
+  instead, so the credential never enters the transcript.
 - ❌ Creating tags, custom fields, pipelines, or stages as a side effect of another task.
 - ❌ Touching agency-level resources (sub-account creation, snapshots, SaaS billing) unless
   explicitly asked **and** holding an agency-level token.
@@ -215,6 +315,22 @@ env vars hold that account's token/location; no secrets in that file, it's safe 
 - **PowerShell 5.1+** (Windows) and **bash** (macOS/Linux/Git-Bash) for the helper scripts;
   `curl` required for the bash helper, `jq` optional for pretty output.
 - **Claude Code** with project MCP support (`.mcp.json`) and hooks (`settings.json`).
+- **The `ghl` MCP server:** Node ≥ 18 and nothing else — no npm dependencies, no build. Speaks
+  MCP over stdio; `node mcp-server/server.js --list` and `npm test --prefix mcp-server` need no
+  credentials.
+- **HighLevel OAuth (optional, for email/password login):** a marketplace app at
+  `marketplace.gohighlevel.com` (client id + secret). **The redirect URL must be HTTPS** —
+  HighLevel rejects plain HTTP — so it points at the hosted connector
+  (`<PUBLIC_URL>/highlevel/callback`), not at a loopback port. Access tokens last ~24h;
+  refresh tokens are valid a year **or until used**, and using one invalidates it, so the
+  replacement must be stored (both servers do). HighLevel has no dynamic client registration,
+  so the app is created once by the agency — see [PUBLISHING.md](PUBLISHING.md).
+- **The hosted connector:** Node ≥ 18, no dependencies. Needs `PUBLIC_URL` (its HTTPS origin,
+  which is the OAuth issuer and token audience) and `ENCRYPTION_KEY` (32 bytes; losing it makes
+  stored connections unreadable). Docker image and compose file included, plus Netlify and
+  Vercel entry points. On either serverless platform a Redis store (Upstash REST) is
+  **required** — the filesystem is wiped between invocations — and `TRUST_PROXY=true`, or the
+  rate limiter sees one address for every caller.
 
 ---
 
@@ -230,6 +346,25 @@ accounts.conf                  ← registry of GHL sub-accounts this connector k
 .mcp.json                      ← registers the LeadConnector MCP (creds from ${GHL_PIT_TOKEN})
 .gitignore                     ← keeps .env, exports and CRM data out of git
 .gitattributes                 ← LF for *.sh so they run on Windows checkouts
+PUBLISHING.md                  ← how to publish the HighLevel marketplace app (hosted connector)
+mcp-server/                    ← the `ghl` MCP server: browser login + ~100 tools, zero deps
+  server.js                    ← entry point (stdio MCP; also --login and --list)
+  src/                         ← protocol, API client, login pages, safety rails, tools/
+  src/context.js               ← per-request credential binding (what makes the tools multi-tenant)
+  test/run.js                  ← 65 self-tests, no credentials required
+  README.md                    ← how the server and its login flow work
+remote/                        ← the hosted connector: same tools over HTTPS, OAuth 2.1
+  server.js                    ← entry point (also --check to validate configuration)
+  src/oauth/                   ← discovery, dynamic registration, codes, tokens, authorize
+  src/transport.js             ← MCP over Streamable HTTP + legacy SSE
+  src/serverless.js            ← Web Request/Response adapter (Netlify-style platforms)
+  src/storage/                 ← file | redis backends behind one interface
+  Dockerfile / docker-compose.yml / .env.example
+  test/run.js                  ← 83 self-tests against a real HTTP server
+  test/storage.js              ← 31 more, against both storage backends
+  README.md                    ← deploy, security properties, operating notes
+netlify.toml + netlify/        ← deploy the hosted connector to Netlify (Functions v2)
+vercel.json + api/index.js     ← deploy the same thing to Vercel (Node handler)
 .claude/
   settings.json                ← wires the SessionStart env-check hook
   mcp-setup.md                 ← how the LeadConnector MCP is configured + troubleshooting
