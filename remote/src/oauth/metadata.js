@@ -1,3 +1,15 @@
+/*
+ * GHL Multi-Account Claude Connector
+ * Copyright (c) 2026 Jishnu Venugopal. All Rights Reserved.
+ *
+ * Proprietary software. You may use this software as-is for your own
+ * GoHighLevel account(s). You may NOT copy, redistribute, or use this
+ * code (or any part of it) to build a new or competing product without
+ * the owner's prior written permission. See LICENSE and NOTICE at the
+ * repository root for full terms. This notice must not be removed.
+ * Contact: jishhnnuu@gmail.com
+ */
+
 'use strict';
 // Discovery documents. These are what let a client connect knowing nothing but the URL:
 // it hits /mcp, gets a 401 pointing at the protected-resource document, follows that to the

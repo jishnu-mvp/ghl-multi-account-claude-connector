@@ -1,0 +1,24 @@
+GHL Multi-Account Claude Connector
+Copyright (c) 2026 Jishnu Venugopal. All Rights Reserved.
+
+This repository and every file within it — including but not limited to
+source code, configuration, shell/PowerShell scripts, documentation, Claude
+Code skills, hooks, and tool definitions, in this directory and every
+subdirectory — is the proprietary work of Jishnu Venugopal
+(jishhnnuu@gmail.com) and is protected under copyright law and the terms of
+the LICENSE file at the root of this repository.
+
+You may use this software as-is to operate it against your own GoHighLevel
+account(s). You may NOT copy, redistribute, reverse-engineer for
+redistribution, rebrand, or use this software (or any part of it, including
+its architecture, prompts, skills, or code) as the basis for a new or
+competing product or service, without the Owner's prior written permission.
+
+This NOTICE file, the LICENSE file, and the copyright headers embedded
+throughout this repository's source files are integral parts of the
+Software. Removing, editing, or omitting them from any copy does not
+transfer, waive, or reduce the Owner's rights in that copy — see LICENSE
+Section 4 ("Survival of Notice and Rights").
+
+Full terms: see the LICENSE file at the repository root.
+Contact / licensing inquiries: jishhnnuu@gmail.com

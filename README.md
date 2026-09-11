@@ -17,6 +17,13 @@ There is nothing to install and no file to edit.
 
 ---
 
+**License:** This repository is proprietary software, copyright © Jishnu Venugopal. All rights
+reserved. You may run and use it for your own GoHighLevel account(s); you may not copy,
+redistribute, or use it (or its code, architecture, or skills) to build a new or competing
+product. See [LICENSE](LICENSE) and [NOTICE](NOTICE) for the full terms.
+
+---
+
 ## Contents
 
 1. [What is this, really?](#1-what-is-this-really)
@@ -1041,3 +1048,24 @@ encryption key and the server backups are now your responsibility. The operating
 
 Base setup adapted from
 [shivamviswas/ghl-crm-claude-base-steup](https://github.com/shivamviswas/ghl-crm-claude-base-steup).
+
+---
+
+## License
+
+**GHL Multi-Account Claude Connector** — Copyright © 2026 **Jishnu Venugopal**. All Rights
+Reserved.
+
+This is proprietary software, not open source. It is licensed, not sold. In short:
+
+- ✅ **You may use it** — run it, deploy it, connect your own GoHighLevel account(s) to it, as-is.
+- ❌ **You may not copy or redistribute** the source code, in original or modified form, outside
+  of running it for your own use.
+- ❌ **You may not use it (or any part of its code, architecture, prompts, or skills) as the
+  basis for a new or competing product or service.**
+- ❌ **You may not remove or alter** the copyright notice, the [LICENSE](LICENSE) file, the
+  [NOTICE](NOTICE) file, or any in-file copyright header — and doing so does not change who
+  owns the software or waive any of the Owner's rights (see [LICENSE](LICENSE) §4).
+
+Full legal terms are in [LICENSE](LICENSE); a short summary is in [NOTICE](NOTICE). For
+licensing questions or permission requests, contact **jishhnnuu@gmail.com**.

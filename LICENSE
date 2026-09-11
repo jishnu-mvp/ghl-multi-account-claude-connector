@@ -1,0 +1,173 @@
+PROPRIETARY SOFTWARE LICENSE
+Copyright (c) 2026 Jishnu Venugopal. All Rights Reserved.
+
+Software: GHL Multi-Account Claude Connector (this repository and all of its
+contents, including without limitation source code, configuration, scripts,
+skills, documentation, prompts, tool definitions, and any other files
+contained in it, in whole or in part, and any modified or updated versions
+of the foregoing) (the "Software").
+
+Author / Sole Owner / Copyright Holder: Jishnu Venugopal
+Contact: jishhnnuu@gmail.com
+
+1. OWNERSHIP AND SCOPE
+
+1.1 The Software was created by, and is solely owned by, Jishnu Venugopal
+    ("the Owner"). The Owner is the sole author and exclusive rights holder
+    of the Software and of all present and future versions, updates,
+    revisions, forks, branches, and derivative works of it, regardless of
+    where or by whom they are hosted, copied, or distributed.
+
+1.2 This license, and the copyright and other intellectual property rights
+    it protects, apply to the Software in its entirety and to every
+    individual file within this repository, including any file from which
+    this notice, the accompanying NOTICE file, or any embedded copyright
+    header has been removed, altered, or omitted. Removal or alteration of
+    this notice from any copy, fork, or portion of the Software does NOT
+    transfer, waive, terminate, or otherwise diminish the Owner's rights
+    in that copy, fork, or portion. The Software remains the Owner's
+    exclusive property regardless of the presence or absence of this
+    notice in any given copy.
+
+1.3 No provision of this license, no act or omission of the Owner, and no
+    course of dealing shall be construed as an assignment, sale, or
+    transfer of ownership, or as a waiver of any of the Owner's rights,
+    unless made by a separate written and signed agreement explicitly
+    stating such intent.
+
+2. GRANT OF LIMITED USE RIGHTS
+
+2.1 Subject to strict compliance with this license, the Owner grants each
+    person or entity that lawfully obtains access to the Software
+    ("Licensee") a limited, non-exclusive, non-transferable,
+    non-sublicensable, revocable license to:
+
+      (a) run and use the Software, as-is and unmodified, solely to
+          operate it as a tool/connector for the Licensee's own
+          GoHighLevel account(s) or for the Licensee's own internal
+          business purposes ("Permitted Use"); and
+
+      (b) make the minimum technical copies of the Software strictly
+          necessary to install, deploy, and run it for the Permitted Use
+          (e.g., cloning the repository to deploy it, or running it in a
+          container or hosting environment).
+
+2.2 No other rights are granted, whether expressly, by implication, by
+    estoppel, or otherwise. All rights not expressly granted in Section
+    2.1 are reserved exclusively to the Owner.
+
+3. PROHIBITED USES
+
+Unless the Owner has given prior, explicit, written permission, the
+Licensee shall NOT, and shall not permit or assist any third party to:
+
+3.1 Copy, reproduce, publish, upload, mirror, or redistribute the Software
+    or any portion of its source code, in original or modified form,
+    to any other repository, platform, product, or storage location, other
+    than as strictly necessary for the Permitted Use under Section 2.1;
+
+3.2 Use the Software, any portion of its source code, its architecture,
+    its prompts, its skills, its tool definitions, or any other component
+    of it as the basis, template, inspiration, or starting point to
+    create, build, market, or sell a new or competing product, service,
+    connector, plugin, or software offering of any kind ("Derivative
+    Product"). Running the unmodified Software to connect the Licensee's
+    own GoHighLevel account(s), as permitted under Section 2.1, is not a
+    Derivative Product;
+
+3.3 Modify, adapt, translate, reverse-engineer, decompile, or create
+    derivative works based on the Software, except to the minimal extent
+    required for the Licensee's own Permitted Use and without
+    redistributing the result to any third party;
+
+3.4 Remove, obscure, alter, or fail to reproduce any copyright, trademark,
+    or proprietary rights notice (including this LICENSE file, the NOTICE
+    file, and any in-file header) from any copy of the Software, in whole
+    or in part;
+
+3.5 Claim authorship, ownership, or original creation of the Software or
+    any part of it, or represent the Software or any Derivative Product
+    as one's own work or as sanctioned, endorsed, or produced by the
+    Owner;
+
+3.6 Sublicense, sell, rent, lease, or otherwise transfer any rights in the
+    Software to any third party;
+
+3.7 Use the Software in any way that infringes the Owner's copyright,
+    trademark, trade secret, or other intellectual property or
+    proprietary rights.
+
+4. SURVIVAL OF NOTICE AND RIGHTS
+
+4.1 This license, the accompanying NOTICE file, and the copyright headers
+    embedded in the Software's files are integral and inseparable parts of
+    the Software. Any copy, fork, mirror, or redistribution of the
+    Software or any portion of it is subject to this license IN FULL,
+    whether or not this file, the NOTICE file, or any in-file header is
+    included in, retained in, or reachable from that copy.
+
+4.2 The Owner's copyright and rights under applicable law exist
+    independently of this document and independently of whether this
+    document or any notice is present in a given copy of the Software.
+    Deletion of this LICENSE file, the NOTICE file, or any copyright
+    header from any copy does not and cannot terminate, waive, or reduce
+    the Owner's rights, and does not grant any person any right not
+    otherwise granted under Section 2.
+
+5. TERMINATION
+
+5.1 This license and all rights granted under Section 2 terminate
+    automatically and immediately, without notice, upon any breach of
+    Section 3.
+
+5.2 Upon termination, the Licensee must immediately cease all use of the
+    Software and destroy or delete all copies in its possession or
+    control.
+
+6. NO WARRANTY
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE OWNER BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN
+AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+THIS INCLUDES, WITHOUT LIMITATION, ANY LIABILITY ARISING FROM INTERACTIONS
+WITH THIRD-PARTY SYSTEMS (INCLUDING GOHIGHLEVEL / LEADCONNECTOR AND
+ANTHROPIC/CLAUDE) PERFORMED THROUGH THE SOFTWARE.
+
+7. GOVERNING LAW AND ENFORCEMENT
+
+7.1 This license shall be governed by and construed in accordance with the
+    laws applicable to the Owner's jurisdiction of residence, without
+    regard to conflict-of-law principles, except to the extent mandatory
+    local law provides otherwise.
+
+7.2 Any dispute arising out of or relating to this license or the
+    Software shall be subject to the exclusive jurisdiction of the courts
+    with competent authority over the Owner's place of residence, unless
+    otherwise required by applicable law.
+
+7.3 The Owner reserves all remedies available at law or in equity for any
+    breach of this license, including injunctive relief, without the
+    necessity of posting a bond, in addition to monetary damages.
+
+8. ENTIRE AGREEMENT; SEVERABILITY
+
+8.1 This document constitutes the entire agreement between the Owner and
+    any Licensee regarding the Software, superseding any prior or
+    contemporaneous understandings.
+
+8.2 If any provision of this license is held unenforceable, the remaining
+    provisions shall remain in full force and effect, and the
+    unenforceable provision shall be reformed to the minimum extent
+    necessary to make it enforceable while preserving its intent.
+
+9. CONTACT
+
+For licensing inquiries, permission requests, or to report a violation of
+this license, contact: jishhnnuu@gmail.com
+
+---
+All rights not expressly granted herein are reserved by the Owner,
+Jishnu Venugopal.

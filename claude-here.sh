@@ -1,4 +1,14 @@
 #!/usr/bin/env bash
+# GHL Multi-Account Claude Connector
+# Copyright (c) 2026 Jishnu Venugopal. All Rights Reserved.
+#
+# Proprietary software. You may use this software as-is for your own
+# GoHighLevel account(s). You may NOT copy, redistribute, or use this
+# code (or any part of it) to build a new or competing product without
+# the owner's prior written permission. See LICENSE and NOTICE at the
+# repository root for full terms. This notice must not be removed.
+# Contact: jishhnnuu@gmail.com
+
 # Load .env into the environment, then launch Claude Code in this folder.
 # .mcp.json references ${GHL_PIT_TOKEN} and ${GHL_LOCATION_ID}; those vars must exist in the
 # environment Claude Code runs in, or the leadconnector MCP server will not connect.

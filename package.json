@@ -3,7 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "description": "Connect GoHighLevel to Claude: an MCP server with browser login (mcp-server/) and a hosted, OAuth 2.1 remote server (remote/).",
-  "license": "MIT",
+  "license": "UNLICENSED",
+  "author": {
+    "name": "Jishnu Venugopal",
+    "email": "jishhnnuu@gmail.com"
+  },
   "engines": {
     "node": ">=18"
   },
