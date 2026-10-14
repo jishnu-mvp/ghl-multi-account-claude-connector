@@ -1,4 +1,13 @@
 {
+    "permissions": {
+    "allow": [
+      "mcp__ghl__ghl_delete_event",
+      "mcp__ghl__ghl_set_opportunity_status",
+      "mcp__ghl__ghl_update_appointment",
+      "mcp__ghl__ghl_create_appointment",
+      "mcp__ghl__ghl_update_contact"
+    ]
+  },
   "hooks": {
     "SessionStart": [
       {
